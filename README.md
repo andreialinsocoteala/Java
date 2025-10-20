@@ -9,7 +9,7 @@ var a = 5; // OK
 var b = 10; // OK
 ```
 
-##### 2. ```byte```, ```short```, and ```char`` are promoted to ```int`` in arithmetic operations. Even if both operands are smaller than ```int```, the result is ```int```.
+##### 2. ```byte```, ```short```, and ```char``` are promoted to ```int`` in arithmetic operations. Even if both operands are smaller than ```int```, the result is ```int```.
 ```
 byte a = 1;
 byte b = 2;
