@@ -122,8 +122,6 @@ public class Main {
     }
 
     private static void invalidOperations() {
-        // Cod care nu compilează:
-        //
         // int pelican = !5;
         // boolean penguin = -true;
         // boolean parrot = ~true;
