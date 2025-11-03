@@ -105,3 +105,51 @@ Chapter 8
 19. f 
 20. a 
 21. a, e, f 
+
+Chapter 9
+1. a, f
+2. b, f 
+3. b
+4. b, f
+5. d 
+6. b, f
+7. b 
+8. e
+9. a
+10. a, b, d
+11. a, b, e, f
+12. b, d, e 
+13. b 
+14. a 
+15. a, b
+16. a, c
+17. e
+18. a, f 
+19. b
+20. b 
+21. b, d, f
+22. b
+23. g 
+
+
+Chapter 10
+1. d
+2. f
+3. a 
+4. a, b
+5. c, d 
+6. a
+7. f
+8. c, e 
+9. b, d
+10. f
+11. b, c, e
+12. f
+13. b 
+14. b, d
+15. b, d
+16. b 
+17. d
+18. c 
+19. b
+20. c, e, f 
