@@ -194,3 +194,58 @@ Closing resource...
 Caught: java.lang.RuntimeException: from body
 Suppressed: java.lang.RuntimeException: from close()
 ```
+
+##### 2. Exceptions in Localization Context
+MissingResourceException - Thrown when a resource bundle or key is not found.
+```
+// Suppose Messages_en.properties exists but has no key "farewell"
+try {
+    ResourceBundle rb = ResourceBundle.getBundle("Messages", Locale.ENGLISH);
+    System.out.println(rb.getString("farewell")); 
+} catch (MissingResourceException e) {
+    System.out.println("Caught: " + e);
+}
+```
+
+IllegalFormatException - Thrown when a format string passed to String.format() is invalid or mismatched with arguments.
+
+```
+// Wrong: %d expects integer, but we pass a double
+try {
+    Locale fr = Locale.FRANCE;
+    double value = 1234.56;
+
+    System.out.printf(fr, "Montant total: %d €%n", value); 
+} catch (IllegalFormatException e) {
+    System.out.println("Caught: " + e);
+}
+```
+
+DateTimeParseException - Thrown when parsing a date/time string that doesn’t match the expected pattern or locale.
+
+```
+try {
+    DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.FRANCE);
+    LocalDate d = LocalDate.parse("2025-11-03", fmt); 
+} catch (DateTimeParseException e) {
+    System.out.println("Caught: " + e);
+}
+```
+
+NumberFormatException - Thrown when parsing a number string that’s invalid for the locale or numeric type.
+
+```
+try {
+    NumberFormat nf = NumberFormat.getInstance(Locale.FRANCE);
+    System.out.println(nf.parse("12,34")); // correct French decimal
+    System.out.println(nf.parse("12.34")); // wrong decimal symbol
+} catch (java.text.ParseException e) {
+    System.out.println("Caught: " + e);
+}
+
+try {
+    int x = Integer.parseInt("12A"); // invalid integer
+} catch (NumberFormatException e) {
+    System.out.println("Caught: " + e);
+}
+```
