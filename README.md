@@ -158,3 +158,31 @@ public class SpliteratorDemo {
 
 
 ```
+
+## Gotchas Ch 11-13
+##### 1. Try-with-Resources - AutoCloseable Order, Suppressed Exceptions
+Resources are closed in reverse order of declaration.
+```
+try (A a = new A(); B b = new B()) {
+    ...
+}
+// b.close() runs before a.close()
+```
+
+If both the body and the close() throw, the close() exception is suppressed, not lost.
+```
+class MyRes implements AutoCloseable {
+    @Override
+    public void close() {
+        System.out.println("Closing resource...");
+        throw new RuntimeException("from close()"); 
+    }
+}
+...
+try (MyRes r = new MyRes()) {
+    throw new RuntimeException("body");
+} catch (Exception e) {
+    for (Throwable t : e.getSuppressed())
+        System.out.println("Suppressed: " + t);
+}
+```
