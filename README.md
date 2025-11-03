@@ -186,3 +186,9 @@ try (MyRes r = new MyRes()) {
         System.out.println("Suppressed: " + t);
 }
 ```
+
+```
+Closing resource...
+Caught: java.lang.RuntimeException: from body
+Suppressed: java.lang.RuntimeException: from close()
+```
