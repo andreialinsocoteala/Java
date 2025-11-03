@@ -180,11 +180,13 @@ class MyRes implements AutoCloseable {
 }
 ...
 try (MyRes r = new MyRes()) {
-    throw new RuntimeException("body");
-} catch (Exception e) {
-    for (Throwable t : e.getSuppressed())
-        System.out.println("Suppressed: " + t);
-}
+            throw new RuntimeException("from body");
+        } catch (Exception e) {
+            System.out.println("Caught: " + e);
+            for (Throwable t : e.getSuppressed()) {
+                System.out.println("Suppressed: " + t);
+            }
+        }
 ```
 
 ```
