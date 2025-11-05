@@ -249,3 +249,23 @@ try {
     System.out.println("Caught: " + e);
 }
 ```
+
+##### 3. Migrating an Application
+
+Bottom-Up Migration
+```
+1. Pick the lowest-level project (a utility JAR or library)
+2. Add module-info.java -> declare exports and requires
+3. Move that project from classpath to module-path
+4. Keep higher-level projects (still unmigrated) on the classpath
+5. Repeat upward until all are migrated
+
+```
+
+Top-Down Migration
+```
+1. Put all projects on the module path
+2. Pick the top-level project (the app) and add module-info.java
+3. Declare requires using automatic module names for lower layers
+4. Repeat with the next-highest layer until everything below is modular
+```
