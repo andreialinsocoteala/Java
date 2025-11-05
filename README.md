@@ -259,7 +259,6 @@ Bottom-Up Migration
 3. Move that project from classpath to module-path
 4. Keep higher-level projects (still unmigrated) on the classpath
 5. Repeat upward until all are migrated
-
 ```
 
 Top-Down Migration
