@@ -249,3 +249,120 @@ try {
     System.out.println("Caught: " + e);
 }
 ```
+
+##### 3. Migrating an Application
+
+Bottom-Up Migration
+```
+1. Pick the lowest-level project (a utility JAR or library)
+2. Add module-info.java -> declare exports and requires
+3. Move that project from classpath to module-path
+4. Keep higher-level projects (still unmigrated) on the classpath
+5. Repeat upward until all are migrated
+
+```
+
+Top-Down Migration
+```
+1. Put all projects on the module path
+2. Pick the top-level project (the app) and add module-info.java
+3. Declare requires using automatic module names for lower layers
+4. Repeat with the next-highest layer until everything below is modular
+```
+
+##### 4. CyclicBarrier
+Lets a fixed number of threads wait for each other at a barrier point
+
+```
+import java.util.concurrent.*;
+
+public class LionPenManager {
+   private void removeLions() { System.out.println("Removing lions");   }
+   private void cleanPen()    { System.out.println("Cleaning the pen"); }
+   private void addLions()    { System.out.println("Adding lions");     }
+   public void performTask(CyclicBarrier c1, CyclicBarrier c2) {
+      try {
+         removeLions();
+         c1.await();
+         cleanPen();
+         c2.await();
+         addLions();
+      } catch (InterruptedException | BrokenBarrierException e) {
+         
+      }
+   }
+   public static void main(String[] args) {
+      try (var service = Executors.newFixedThreadPool(4)) {
+         var manager = new LionPenManager();
+         var c1 = new CyclicBarrier(4);
+         var c2 = new CyclicBarrier(4,
+            () -> System.out.println("*** Pen Cleaned!"));
+         for (int i = 0; i < 4; i++)
+            service.submit(() -> manager.performTask(c1, c2));
+      } 
+    }
+}
+```
+
+```
+Removing lions
+Removing lions
+Removing lions
+Removing lions
+Cleaning the pen
+Cleaning the pen
+Cleaning the pen
+Cleaning the pen
+*** Pen Cleaned!
+Adding lions
+Adding lions
+Adding lions
+Adding lions
+```
+
+Without CyclicBarrier:
+```
+Removing lions
+Removing lions
+Cleaning the pen
+Adding lions
+Removing lions
+Cleaning the pen
+Adding lions
+Removing lions
+Cleaning the pen
+Adding lions
+Cleaning the pen
+Adding lions
+```
+
+#### 5. ExecutorService.submit() vs execute()
+##### a) void execute(Runnable command) -> Executes Runnable task at some point in future
+```
+try (ExecutorService service = Executors.newSingleThreadExecutor()) {
+   System.out.println("begin");
+   service.execute(printInventory);
+   service.execute(printRecords);
+   service.execute(printInventory);
+   System.out.println("end");
+}
+```
+
+##### b) Future<?> submit(Runnable task) -> Executes Runnable task at some point in future and returns Future representing task
+
+```
+public class CheckResults {
+   private static int counter = 0;
+   public static void main(String[] unused) throws Exception {
+      try (var service = Executors.newSingleThreadExecutor()) {
+         Future<?> result = service.submit(() -> {
+            for (int i = 0; i < 1_000_000; i++) counter++;
+         });
+         result.get(10, TimeUnit.SECONDS);  
+         ...
+      } catch (TimeoutException e) {
+         ...
+        }
+    }
+}
+```
