@@ -209,3 +209,30 @@ Chapter 12
 23. f		0/1 => corect: e
 24. a		1/1		
 25. a, d	2/3 => corect: a, c, d
+
+Chapter 13
+1. d, f		2/2	
+2. a, d		2/2
+3. c, e, f	2/3 => corect: b, c, f
+4. d		1/1
+5. d		0/1 => corect: c
+6. c, e		2/2
+7. d		1/1
+8. e		0/1 => corect: b
+9. b, d		2/2
+10. a		1/1
+11. a		0/1 => corect: f
+12. a, e	2/2
+13. c		1/1
+14. c, e	2/2	
+15. b 		0/1 => corect: a 
+16. a, d, e	3/3
+17. f		1/1
+18. c, e, f	2/3 => corect: c, e, g
+19. e, g	2/2
+20. f		1/1
+21. a, d	2/2	
+22. a		0/1 => corect: a
+23. f		1/1 
+24. a, f	2/2
+25. c		1/2 => corect: c, d
