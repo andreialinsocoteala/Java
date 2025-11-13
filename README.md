@@ -366,3 +366,68 @@ public class CheckResults {
     }
 }
 ```
+
+## Gotchas Ch 14
+
+#### 1. Operating on File and Path
+
+normalize() removes . and .. but doesn’t check existence
+
+```
+Path p = Path.of("/a/./b/../c");
+System.out.println(p.normalize()); // /a/c
+```
+
+resolve() ignores the left side if the right side is absolute
+
+```
+Path base = Path.of("/home/user");
+System.out.println(base.resolve("/etc/config")); // /etc/config
+```
+
+relativize() throws if roots differ
+```
+Path p1 = Path.of("/home/user");
+Path p2 = Path.of("C:/data");
+p1.relativize(p2); // IllegalArgumentException (different roots)
+```
+
+#### 2. Reading and Writing Files
+
+Files.copy() fails if target exists — unless you specify REPLACE_EXISTING
+```
+Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
+```
+
+Files.readAllLines() loads entire file into memory
+
+#### 3. Serializing Data
+Serializable classes need a serialVersionUID - If an older version of the class is encountered during deserialization, a java.io.InvalidClassException may be thrown.
+```
+private static final long serialVersionUID = 1L;
+```
+transient fields are not saved
+```
+class User implements Serializable {
+    transient String password; //After deserialization -> password == null.
+}
+```
+
+#### 4. Interacting with Users
+readPassword() returns char[], not String
+
+Files.find() and Files.walk() both require closing the returned stream -> They return Stream<Path> 
+```
+try (var s = Files.walk(Path.of("."))) {
+    s.forEach(System.out::println);
+}
+```
+
+#### 5. Files.list()
+It traverses the contents of only a single directory.
+Must be closed => It returns a stream, not a simple list:
+```
+try (var s = Files.list(Path.of("."))) {
+    s.forEach(System.out::println);
+}
+```
