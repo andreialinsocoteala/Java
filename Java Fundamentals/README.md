@@ -1,0 +1,368 @@
+# Java
+
+## Gotchas Ch 1-5
+##### 1. ```var``` cannot be used to declare multiple variables on the same line
+```
+var a, b = 5; // DOES NOT COMPILE
+
+var a = 5; // OK
+var b = 10; // OK
+```
+
+##### 2. ```byte```, ```short```, and ```char``` are promoted to ```int``` in arithmetic operations. Even if both operands are smaller than ```int```, the result is ```int```.
+```
+byte a = 1;
+byte b = 2;
+
+byte c = a + b; // DOES NOT COMPILE
+int c = a + b; // OK
+```
+
+##### 3. The ```default``` label in a ```switch``` statement can appear anywhere, ```default``` doesn’t have to be last
+```
+int x = 2;
+switch (x) {
+    default: System.out.println("Default");
+    case 2: System.out.println("Case 2");
+}
+```
+##### 4. ```Arrays.binarySearch()``` requires a sorted array. If the array isn’t sorted, the result is unpredictable.
+```
+int[] arr = {5, 1, 3};
+System.out.println(Arrays.binarySearch(arr, 3)); 
+```
+
+##### 5. Java can perform either a ```cast``` or ```autoboxing```, not both at the same time. Java cannot both ```cast``` and ```autobox``` in a single step.
+```
+Long bad = 8;  // DOES NOT COMPILE
+
+Long good = (long)8; // OK 
+Long alsoGood = Long.valueOf(8); // OK
+```
+
+
+## Gotchas Ch 6-10
+##### 1. Implicit ```super()``` call and missing no-arg constructor
+
+If a subclass constructor doesn’t explicitly call super(...), the compiler inserts super(). If the superclass has no no-arg constructor, this won’t compile.
+```
+class Parent {
+    private final int x;
+    Parent(int x) { this.x = x; }   // no no-arg ctor
+}
+
+class Child extends Parent {
+    // Compiler injects super() here ->  compile error
+    Child() { }
+}
+
+// Fix: call an existing superclass constructor explicitly
+class ChildFixed extends Parent {
+    ChildFixed() { super(42); }
+}
+```
+
+##### 2. ```permits``` is optional (in one specific case)
+
+For sealed classes, the permits clause is optional when all permitted subclasses are declared in the same source file. Otherwise, you must list them with permits
+```
+sealed class Shape { } 
+
+final class Circle extends Shape { }
+final class Square extends Shape { }
+
+// If Circle/Square are in different files, you must write:
+// sealed class Shape permits Circle, Square { }
+
+```
+
+##### 3. Lambdas capture only effectively-final variables
+
+Variables captured by a lambda must be effectively final — not modified after assignment.
+```
+
+public class Demo {
+    public static void main(String[] args) {
+        int base = 10;
+        Supplier<Integer> s = () -> base + 5; // OK: base is effectively final
+
+        base++; // compile error
+
+        System.out.println(s.get()); 
+    }
+}
+
+```
+
+##### 4. Java 21 ```sequenced``` collections
+
+Java 21 adds SequencedCollection, SequencedSet, and SequencedMap to unify “insertion-order” APIs. They expose front/back operations and easy reversed views.
+```
+
+public class SequencedDemo {
+    public static void main(String[] args) {
+        // SequencedCollection via ArrayList
+        SequencedCollection<String> sc = new ArrayList<>();
+        sc.addFirst("b");
+        sc.addLast("c");
+        sc.addFirst("a");           // [a, b, c]
+        System.out.println(sc.getFirst()); // a
+        System.out.println(sc.getLast());  // c
+        System.out.println(sc.reversed()); // view: [c, b, a]
+
+        // SequencedSet via LinkedHashSet
+        SequencedSet<Integer> ss = new LinkedHashSet<>();
+        ss.addLast(2); ss.addFirst(1); ss.addLast(3); // [1, 2, 3]
+        System.out.println(ss.reversed());            // [3, 2, 1]
+
+        // SequencedMap via LinkedHashMap
+        SequencedMap<String,Integer> sm = new LinkedHashMap<>();
+        sm.put("a", 1); sm.put("b", 2); sm.put("c", 3); // order: a,b,c
+        System.out.println(sm.firstEntry());             // a=1
+        System.out.println(sm.lastEntry());              // c=3
+        System.out.println(sm.reversed().keySet());      // [c, b, a]
+        sm.pollFirstEntry();                              // removes a=1
+        sm.pollLastEntry();                               // removes c=3
+        System.out.println(sm);                           // {b=2}
+    }
+}
+
+
+```
+
+
+##### 5. ```Spliterator```
+
+A Spliterator is an iterator designed for parallel and bulk traversal. It can: split itself (trySplit()) for parallel work, advance one element at a time (tryAdvance), report characteristics (e.g., ORDERED, SIZED, DISTINCT, …).
+```
+import java.util.*;
+import java.util.Spliterator;
+
+public class SpliteratorDemo {
+    public static void main(String[] args) {
+        List<String> data = List.of("a","b","c","d","e","f");
+        Spliterator<String> s1 = data.spliterator();
+        Spliterator<String> s2 = s1.trySplit(); // split into two parts (may be null if too small)
+
+        System.out.println("S1 characteristics: " + s1.characteristics()); // ORDERED | SIZED | SUBSIZED | ...
+        System.out.println("Estimated sizes: s1=" + s1.estimateSize() + ", s2=" + (s2==null?0:s2.estimateSize()));
+
+        // Process in parallel-ish style
+        Runnable r1 = () -> s1.forEachRemaining(x -> System.out.println("L1: " + x));
+        Runnable r2 = () -> { if (s2 != null) s2.forEachRemaining(x -> System.out.println("L2: " + x)); };
+
+        new Thread(r1).start();
+        new Thread(r2).start();
+    }
+}
+
+
+```
+
+## Gotchas Ch 11-13
+##### 1. Try-with-Resources - AutoCloseable Order, Suppressed Exceptions
+Resources are closed in reverse order of declaration.
+```
+try (A a = new A(); B b = new B()) {
+    ...
+}
+// b.close() runs before a.close()
+```
+
+If both the body and the close() throw, the close() exception is suppressed, not lost.
+```
+class MyRes implements AutoCloseable {
+    @Override
+    public void close() {
+        System.out.println("Closing resource...");
+        throw new RuntimeException("from close()"); 
+    }
+}
+...
+try (MyRes r = new MyRes()) {
+            throw new RuntimeException("from body");
+        } catch (Exception e) {
+            System.out.println("Caught: " + e);
+            for (Throwable t : e.getSuppressed()) {
+                System.out.println("Suppressed: " + t);
+            }
+        }
+```
+
+```
+Closing resource...
+Caught: java.lang.RuntimeException: from body
+Suppressed: java.lang.RuntimeException: from close()
+```
+
+##### 2. Exceptions in Localization Context
+MissingResourceException - Thrown when a resource bundle or key is not found.
+```
+// Suppose Messages_en.properties exists but has no key "farewell"
+try {
+    ResourceBundle rb = ResourceBundle.getBundle("Messages", Locale.ENGLISH);
+    System.out.println(rb.getString("farewell")); 
+} catch (MissingResourceException e) {
+    System.out.println("Caught: " + e);
+}
+```
+
+IllegalFormatException - Thrown when a format string passed to String.format() is invalid or mismatched with arguments.
+
+```
+// Wrong: %d expects integer, but we pass a double
+try {
+    Locale fr = Locale.FRANCE;
+    double value = 1234.56;
+
+    System.out.printf(fr, "Montant total: %d €%n", value); 
+} catch (IllegalFormatException e) {
+    System.out.println("Caught: " + e);
+}
+```
+
+DateTimeParseException - Thrown when parsing a date/time string that doesn’t match the expected pattern or locale.
+
+```
+try {
+    DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.FRANCE);
+    LocalDate d = LocalDate.parse("2025-11-03", fmt); 
+} catch (DateTimeParseException e) {
+    System.out.println("Caught: " + e);
+}
+```
+
+NumberFormatException - Thrown when parsing a number string that’s invalid for the locale or numeric type.
+
+```
+try {
+    NumberFormat nf = NumberFormat.getInstance(Locale.FRANCE);
+    System.out.println(nf.parse("12,34")); // correct French decimal
+    System.out.println(nf.parse("12.34")); // wrong decimal symbol
+} catch (java.text.ParseException e) {
+    System.out.println("Caught: " + e);
+}
+
+try {
+    int x = Integer.parseInt("12A"); // invalid integer
+} catch (NumberFormatException e) {
+    System.out.println("Caught: " + e);
+}
+```
+
+##### 3. Migrating an Application
+
+Bottom-Up Migration
+```
+1. Pick the lowest-level project (a utility JAR or library)
+2. Add module-info.java -> declare exports and requires
+3. Move that project from classpath to module-path
+4. Keep higher-level projects (still unmigrated) on the classpath
+5. Repeat upward until all are migrated
+
+```
+
+Top-Down Migration
+```
+1. Put all projects on the module path
+2. Pick the top-level project (the app) and add module-info.java
+3. Declare requires using automatic module names for lower layers
+4. Repeat with the next-highest layer until everything below is modular
+```
+
+##### 4. CyclicBarrier
+Lets a fixed number of threads wait for each other at a barrier point
+
+```
+import java.util.concurrent.*;
+
+public class LionPenManager {
+   private void removeLions() { System.out.println("Removing lions");   }
+   private void cleanPen()    { System.out.println("Cleaning the pen"); }
+   private void addLions()    { System.out.println("Adding lions");     }
+   public void performTask(CyclicBarrier c1, CyclicBarrier c2) {
+      try {
+         removeLions();
+         c1.await();
+         cleanPen();
+         c2.await();
+         addLions();
+      } catch (InterruptedException | BrokenBarrierException e) {
+         
+      }
+   }
+   public static void main(String[] args) {
+      try (var service = Executors.newFixedThreadPool(4)) {
+         var manager = new LionPenManager();
+         var c1 = new CyclicBarrier(4);
+         var c2 = new CyclicBarrier(4,
+            () -> System.out.println("*** Pen Cleaned!"));
+         for (int i = 0; i < 4; i++)
+            service.submit(() -> manager.performTask(c1, c2));
+      } 
+    }
+}
+```
+
+```
+Removing lions
+Removing lions
+Removing lions
+Removing lions
+Cleaning the pen
+Cleaning the pen
+Cleaning the pen
+Cleaning the pen
+*** Pen Cleaned!
+Adding lions
+Adding lions
+Adding lions
+Adding lions
+```
+
+Without CyclicBarrier:
+```
+Removing lions
+Removing lions
+Cleaning the pen
+Adding lions
+Removing lions
+Cleaning the pen
+Adding lions
+Removing lions
+Cleaning the pen
+Adding lions
+Cleaning the pen
+Adding lions
+```
+
+#### 5. ExecutorService.submit() vs execute()
+##### a) void execute(Runnable command) -> Executes Runnable task at some point in future
+```
+try (ExecutorService service = Executors.newSingleThreadExecutor()) {
+   System.out.println("begin");
+   service.execute(printInventory);
+   service.execute(printRecords);
+   service.execute(printInventory);
+   System.out.println("end");
+}
+```
+
+##### b) Future<?> submit(Runnable task) -> Executes Runnable task at some point in future and returns Future representing task
+
+```
+public class CheckResults {
+   private static int counter = 0;
+   public static void main(String[] unused) throws Exception {
+      try (var service = Executors.newSingleThreadExecutor()) {
+         Future<?> result = service.submit(() -> {
+            for (int i = 0; i < 1_000_000; i++) counter++;
+         });
+         result.get(10, TimeUnit.SECONDS);  
+         ...
+      } catch (TimeoutException e) {
+         ...
+        }
+    }
+}
+```
