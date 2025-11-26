@@ -1,0 +1,39 @@
+# Compiled class files
+/target/
+*.class
+
+# Maven
+/logs/
+*.log
+*.mvn/
+!/.mvn/wrapper/maven-wrapper.jar
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+out/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Others
+*.swp
+*~
+
+# Test output
+/test-output/
+
+# Ignore build and dependency folders
+/build/
+/node_modules/
+
+# Ignore local environment files
+.env
+
